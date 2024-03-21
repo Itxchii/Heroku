@@ -41,7 +41,7 @@ jobs:
       - name: Set up Heroku
         uses: akhileshns/heroku-deploy@v3.13.15
         with:
-          heroku_api_key: 39fb3dd7-1a30-4b6e-84c8-e0e86e94ee61
-          heroku_app_name: pacific-basin-86584
-          heroku_email: yanis.mezaber@estiam.com
+          heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
+          heroku_app_name: ${{ vars.HEROKU_APP_NAME }}
+          heroku_email: ${{ secrets.HEROKU_EMAIL }}
           
