@@ -3,50 +3,60 @@ import pandas as pd
 
 # import matplotlib.pyplot as plt
 import plotly.express as px
-from src.fetch_data import fetch_data, build_url
-from src.process_data import col_date, col_donnees, cols, fic_export_data, main_process
+from src.fetch_data import load_data_from_lag_to_today
+from src.process_data import col_date, col_donnees, main_process, fic_export_data, format_data_jour
 import logging
 import os
-from datetime import date, timedelta
+import glob
+from datetime import datetime
 
+
+def remove_data(df: pd.DataFrame, last_n_samples: int = 4*3):
+
+    # df: pd.DataFrame = pd.read_csv(fic_export_data)
+    return df.iloc[:-last_n_samples]
+    # df.to_csv(fic_export_data, index=False)
 logging.basicConfig(level=logging.INFO)
 
+
+LAG_N_DAYS: int = 7
 
 # * INIT REPO FOR DATA
 os.makedirs("data/raw/", exist_ok=True)
 os.makedirs("data/interim/", exist_ok=True)
 
+# * remove outdated json files
+for file_path in glob.glob("data/raw/*json"):
+    try:
+        os.remove(file_path)
+    except FileNotFoundError as e:
+        logging.warning(e)
+
 # plt.switch_backend("TkAgg")
 
 # Title for your app
-st.title("Dashboard de visualisation de la consommation électrique")
+st.title("Data Visualization App")
 
 
 # Load data from CSV
-@st.cache_data  # This decorator caches the data to prevent reloading on every interaction.
-def load_data(file_path):
-    try:
-        data = pd.read_csv(
-            file_path, parse_dates=[col_date]
-        )  # Adjust 'DateColumn' to your date column name*
-    except FileNotFoundError as e:
-        logging.warn(
-            f"data file does not exist, calling fetch data to get last day of data"
-        )
-        last_day: str = str(date.today() - timedelta(days=1))
-        data: pd.DataFrame = fetch_data(build_url(last_day))
-        main_process()
-        data = pd.read_csv(
-            file_path, parse_dates=[col_date]
-        )  # Adjust 'DateColumn' to your date column name*
+@st.cache_data(
+    ttl=15 * 60
+)  # This decorator caches the data to prevent reloading on every interaction.
+def load_data(lag_days: int):
+    load_data_from_lag_to_today(lag_days)
+    main_process()
+    data = pd.read_csv(
+        fic_export_data, parse_dates=[col_date]
+    )  # Adjust 'DateColumn' to your date column name*
     return data
 
 
 # Assuming your CSV is named 'data.csv' and is in the same directory as your app.py
-df = load_data(fic_export_data)
+df = load_data(LAG_N_DAYS)
+df = remove_data(df, last_n_samples=4*24)
 
 # Creating a line chart
-st.subheader("Consommation électrique en fonction du temps")
+st.subheader("Line Chart of Numerical Data Over Time")
 
 # Select the numerical column to plot
 # This lets the user select a column if there are multiple numerical columns available
@@ -62,7 +72,20 @@ numerical_column = col_donnees
 # # Display the plot
 # st.pyplot(fig)
 
+now = datetime.now()
+now_aware = now.replace(microsecond=0).isoformat() + '+00:00'
+formatted_time = datetime.fromisoformat(now_aware)
+last = df.iloc[-1][col_date]
+
+diff = formatted_time - last
+
+
 # ! Plotly
 # Create interactive line chart using Plotly
 fig = px.line(df, x=col_date, y=col_donnees, title="Consommation en fonction du temps")
 st.plotly_chart(fig)
+
+st.subheader(f'Temps manquant: {diff}')
+
+fig2 = px.bar(format_data_jour(df), x=col_date, y=col_donnees, title="Moyenne de la consommation des jours de la semaine")
+st.plotly_chart(fig2)

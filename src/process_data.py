@@ -4,6 +4,7 @@ import os
 import glob
 from pathlib import Path
 import json
+import datetime
 
 col_date: str = "date_heure"
 col_donnees: str = "consommation"
@@ -24,6 +25,7 @@ def load_data():
     df: pd.DataFrame = pd.concat(list_df, ignore_index=True)
     return df
 
+
 def format_data(df: pd.DataFrame):
     # typage
     df[col_date] = pd.to_datetime(df[col_date])
@@ -35,14 +37,23 @@ def format_data(df: pd.DataFrame):
     df = df.drop_duplicates()
     return df
 
+
 def export_data(df: pd.DataFrame):
     os.makedirs("data/interim/", exist_ok=True)
     df.to_csv(fic_export_data, index=False)
+
+
+def format_data_jour(df: pd.DataFrame):
+    df = df.groupby(df[col_date].dt.day_of_week)[col_donnees].mean().reset_index()
+
+    return df
+
 
 def main_process():
     df: pd.DataFrame = load_data()
     df = format_data(df)
     export_data(df)
+
 
 if __name__ == "__main__":
 
