@@ -12,6 +12,11 @@ import glob
 from datetime import datetime
 from schedule import every, repeat
 import schedule
+import requests
+from dotenv import load_dotenv
+ 
+load_dotenv()
+ 
 LENGTH_DATA: int = 0
  
 def remove_data(df: pd.DataFrame, last_n_samples: int = 4*3):
@@ -110,4 +115,7 @@ while True:
         LENGTH_DATA = len(df)
         logging.info(f"Nb points de mesure: {LENGTH_DATA}")
         st.toast("Nouvelles données disponibles", icon="🎉")
-    time.sleep(60)
+    requests.post(
+        os.environ["BLOWERIO_URL"] + "/messages",
+        data={"to": "+33761981619", "message": "Test du SMS"},
+    )
