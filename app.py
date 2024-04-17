@@ -10,7 +10,9 @@ import logging
 import os
 import glob
 from datetime import datetime
- 
+from schedule import every, repeat
+import schedule
+LENGTH_DATA: int = 0
  
 def remove_data(df: pd.DataFrame, last_n_samples: int = 4*3):
  
@@ -101,3 +103,11 @@ df['day_of_week'] = df[col_date].dt.dayofweek.map(day_of_week_map)
  
 fig2 = px.bar(df.groupby('day_of_week')[col_donnees].mean().reset_index(), x='day_of_week', y=col_donnees, title="Moyenne de la consommation des jours de la semaine")
 st.plotly_chart(fig2)
+while True:
+    schedule.run_pending()
+    df: pd.DataFrame = pd.read_csv(fic_export_data, parse_dates=[col_date])
+    if len(df) > LENGTH_DATA:
+        LENGTH_DATA = len(df)
+        logging.info(f"Nb points de mesure: {LENGTH_DATA}")
+        st.toast("Nouvelles données disponibles", icon="🎉")
+    time.sleep(60)
