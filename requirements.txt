@@ -5,6 +5,7 @@ psycopg2-binary
 streamlit  # If using Streamlit
 plotly
 black
+schedule
 
 # # Uncomment these lines to use a Postgres database. Both are needed, since in production
 # # (which uses Linux) we want to install from source, so that security updates from the

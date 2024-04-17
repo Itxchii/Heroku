@@ -3,6 +3,8 @@ import logging
 import json
 import uuid
 from datetime import datetime, timedelta
+from schedule import every, repeat
+import schedule
 
 logging.basicConfig(level=logging.INFO)
 # Function to fetch data from API
@@ -53,7 +55,9 @@ def fetch_data(api_url):
         with open(f"data/raw/{id_json}.json", "w") as f:
             json.dump(data, f)
     return status_code
-
+schedule.every(1).minutes.do(
+    fetch_data, api_url=build_url(datetime.today().strftime("%Y-%m-%d"))
+)
 
 def load_data_from_lag_to_today(n_days: int):
     for d in range(0, n_days + 1):
