@@ -5,6 +5,10 @@ import glob
 from pathlib import Path
 import json
 import datetime
+from schedule import repeat, every
+import logging
+logging.basicConfig(level=logging.INFO)
+
 
 col_date: str = "date_heure"
 col_donnees: str = "consommation"
@@ -48,8 +52,9 @@ def format_data_jour(df: pd.DataFrame):
 
     return df
 
-
+@repeat(every(5).minutes)
 def main_process():
+    logging.info("maj fichier - main_process()")
     df: pd.DataFrame = load_data()
     df = format_data(df)
     export_data(df)
